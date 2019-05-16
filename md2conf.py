@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 # --------------------------------------------------------------------------------------------------------
 # Rittman Mead Markdown to Confluence Tool
@@ -9,11 +9,18 @@
 # Usage: rest_md2conf.py markdown spacekey
 # --------------------------------------------------------------------------------------------------------
 
-import sys, os
-import markdown, mimetypes, codecs
-import re, collections
-import requests, json
-import argparse, urllib, webbrowser
+import sys
+import os
+import json
+import markdown
+import mimetypes
+import codecs
+import re
+import collections
+import requests
+import argparse
+import urllib
+import webbrowser
 
 # ArgumentParser to parse arguments and options
 parser = argparse.ArgumentParser()
@@ -45,19 +52,19 @@ try:
     contents = args.contents
 
     if username is None:
-        print 'Error: Username not specified by environment variable or option.'
+        print('Error: Username not specified by environment variable or option.')
         sys.exit(1)
 
     if password is None:
-        print 'Error: Password not specified by environment variable or option.'
+        print('Error: Password not specified by environment variable or option.')
         sys.exit(1)
 
     if orgname is None:
-        print 'Error: Org Name not specified by environment variable or option.'
+        print('Error: Org Name not specified by environment variable or option.')
         sys.exit(1)
 
     if not os.path.exists(markdownFile):
-        print 'Error: Markdown file: %s does not exist.' % (markdownFile)
+        print('Error: Markdown file: %s does not exist.' % (markdownFile))
         sys.exit(1)
 
     if spacekey is None:
@@ -65,12 +72,13 @@ try:
 
     wikiUrl = 'https://%s.atlassian.net/wiki' % orgname
     if nossl:
-        wikiUrl.replace('https://','http://')
+        wikiUrl.replace('https://', 'http://')
 
-except Exception, err:
-    print '\n\nException caught:\n%s ' % (err)
-        print '\nFailed to process command line arguments. Exiting.'
-        sys.exit(1)
+except Exception as err:
+    print('\n\nException caught:\n%s ' % (err))
+    print('\nFailed to process command line arguments. Exiting.')
+    sys.exit(1)
+
 
 # Convert html code blocks to Confluence macros
 def convertCodeBlock(html):
@@ -175,7 +183,7 @@ def processRefs(html):
 
 # Retrieve page details by title
 def getPage(title):
-    print '\tRetrieving page information: %s' % title
+    print('\tRetrieving page information: %s' % title)
     url = '%s/rest/api/content?title=%s&spaceKey=%s&expand=version,ancestors' % (wikiUrl, urllib.quote_plus(title), spacekey)
 
     s = requests.Session()
@@ -189,9 +197,9 @@ def getPage(title):
     except Exception as err:
         error = re.search('^404', err.message)
         if error:
-            print '\nError: Page not found. Check the following are correct:'
-            print '\tSpace Key : %s' % spacekey
-            print '\tOrganisation Name: %s\n' % orgname
+            print('\nError: Page not found. Check the following are correct:')
+            print('\tSpace Key : %s' % spacekey)
+            print('\tOrganisation Name: %s\n' % orgname)
         sys.exit(1)
 
     data = r.json()
@@ -225,13 +233,13 @@ def addImages(pageId, html):
 # Add contents page
 def addContents(html):
     contentsMarkup = '<ac:structured-macro ac:name="toc">\n<ac:parameter ac:name="printable">true</ac:parameter>\n<ac:parameter ac:name="style">disc</ac:parameter>'
-      contentsMarkup = contentsMarkup + '<ac:parameter ac:name="maxLevel">5</ac:parameter>\n<ac:parameter ac:name="minLevel">1</ac:parameter>'
-      contentsMarkup = contentsMarkup + '<ac:parameter ac:name="class">rm-contents</ac:parameter>\n<ac:parameter ac:name="exclude"></ac:parameter>\n<ac:parameter ac:name="type">list</ac:parameter>'
-     contentsMarkup = contentsMarkup + '<ac:parameter ac:name="outline">false</ac:parameter>\n<ac:parameter ac:name="include"></ac:parameter>\n</ac:structured-macro>'
+    contentsMarkup = contentsMarkup + '<ac:parameter ac:name="maxLevel">5</ac:parameter>\n<ac:parameter ac:name="minLevel">1</ac:parameter>'
+    contentsMarkup = contentsMarkup + '<ac:parameter ac:name="class">rm-contents</ac:parameter>\n<ac:parameter ac:name="exclude"></ac:parameter>\n<ac:parameter ac:name="type">list</ac:parameter>'
+    contentsMarkup = contentsMarkup + '<ac:parameter ac:name="outline">false</ac:parameter>\n<ac:parameter ac:name="include"></ac:parameter>\n</ac:structured-macro>'
 
 
-     html = contentsMarkup + '\n' + html
-     return html
+    html = contentsMarkup + '\n' + html
+    return html
 
 # Add attachments for an array of files
 def addAttachments(pageId, files):
@@ -243,7 +251,7 @@ def addAttachments(pageId, files):
 
 # Create a new page
 def createPage(title, body, ancestors):
-    print '\nCreating page...'
+    print('\nCreating page...')
 
     url = '%s/rest/api/content/' % wikiUrl
 
@@ -273,23 +281,23 @@ def createPage(title, body, ancestors):
         version = data[u'version'][u'number']
         link = '%s%s' %(wikiUrl, data[u'_links'][u'webui'])
 
-        print '\nPage created in %s with ID: %s.' % (spaceName, pageId)
-        print 'URL: %s' % link
+        print('\nPage created in %s with ID: %s.' % (spaceName, pageId))
+        print('URL: %s' % link)
 
         imgCheck = re.search('<img(.*?)\/>', body)
         if imgCheck or attachments:
-            print '\tAttachments found, update procedure called.'
+            print('\tAttachments found, update procedure called.')
             updatePage(pageId, title, body, version, ancestors, attachments)
         else:
             if goToPage:
                 webbrowser.open(link)
     else:
-        print '\nCould not create page.'
+        print('\nCould not create page.')
         sys.exit(1)
 
 # Delete a page
 def deletePage(pageId):
-    print '\nDeleting page...'
+    print('\nDeleting page...')
     url = '%s/rest/api/content/%s' % (wikiUrl, pageId)
 
     s = requests.Session()
@@ -300,13 +308,13 @@ def deletePage(pageId):
     r.raise_for_status()
 
     if r.status_code == 204:
-        print 'Page %s deleted successfully.' % pageId
+        print('Page %s deleted successfully.' % pageId)
     else:
-        print 'Page %s could not be deleted.' % pageId
+        print('Page %s could not be deleted.' % pageId)
 
 # Update a page
 def updatePage(pageId, title, body, version, ancestors, attachments):
-    print '\nUpdating page...'
+    print('\nUpdating page...')
 
     # Add images and attachments
     body = addImages(pageId, body)
@@ -342,12 +350,12 @@ def updatePage(pageId, title, body, version, ancestors, attachments):
         data = r.json()
         link = '%s%s' %(wikiUrl, data[u'_links'][u'webui'])
 
-        print "\nPage updated successfully."
-        print 'URL: %s' % link
+        print("\nPage updated successfully.")
+        print('URL: %s' % link)
         if goToPage:
             webbrowser.open(link)
     else:
-        print "\nPage could not be updated."
+        print("\nPage could not be updated.")
 
 def getAttachment(pageId, filename):
     url = '%s/rest/api/content/%s/child/attachment?filename=%s' % (wikiUrl, pageId, filename)
@@ -391,26 +399,26 @@ def uploadAttachment(pageId, file, comment):
     s.auth = (username, password)
     s.headers.update({'X-Atlassian-Token' : 'no-check'})
 
-    print '\tUploading attachment %s...' % fileName
+    print('\tUploading attachment %s...' % fileName)
 
     r = s.post(url, files=fileToUpload)
     r.raise_for_status()
 
 
 def main():
-    print '\n\n\t\t----------------------------------'
-    print '\t\tMarkdown to Confluence Upload Tool'
-    print '\t\t----------------------------------\n\n'
+    print('\n\n\t\t----------------------------------')
+    print('\t\tMarkdown to Confluence Upload Tool')
+    print('\t\t----------------------------------\n\n')
 
-    print 'Markdown file:\t%s' % markdownFile
-    print 'Space Key:\t%s' % spacekey
+    print('Markdown file:\t%s' % markdownFile)
+    print('Space Key:\t%s' % spacekey)
 
     with open(markdownFile, 'r') as f:
         title = f.readline().strip()
         f.seek(0)
         mdContent = f.read()
 
-    print 'Title:\t\t%s' % title
+    print('Title:\t\t%s' % title)
 
     with codecs.open(markdownFile,'r','utf-8') as f:
         html=markdown.markdown(f.read(), extensions = ['markdown.extensions.tables', 'markdown.extensions.fenced_code'])
@@ -425,7 +433,7 @@ def main():
 
     html = processRefs(html)
 
-    print '\nChecking if Atlas page exists...'
+    print('\nChecking if Atlas page exists...')
     page = getPage(title)
 
     if delete and page:
@@ -437,7 +445,7 @@ def main():
         if parentPage:
             ancestors = [{'type':'page','id':parentPage.id}]
         else:
-            print 'Error: Parent page does not exist: %s' % ancestor
+            print('Error: Parent page does not exist: %s' % ancestor)
             sys.exit(1)
     else:
         ancestors = []
@@ -447,7 +455,7 @@ def main():
     else:
         createPage(title, html, ancestors)
 
-    print '\nMarkdown Converter completed successfully.'
+    print('\nMarkdown Converter completed successfully.')
 
 if __name__ == "__main__":
     main()
