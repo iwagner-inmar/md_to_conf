@@ -20,7 +20,7 @@ import collections
 import requests
 import argparse
 import urllib
-import webbrowser
+# import webbrowser
 
 # ArgumentParser to parse arguments and options
 parser = argparse.ArgumentParser()
@@ -184,7 +184,7 @@ def processRefs(html):
 # Retrieve page details by title
 def getPage(title):
     print('\tRetrieving page information: %s' % title)
-    url = '%s/rest/api/content?title=%s&spaceKey=%s&expand=version,ancestors' % (wikiUrl, urllib.quote_plus(title), spacekey)
+    url = '%s/rest/api/content?title=%s&spaceKey=%s&expand=version,ancestors' % (wikiUrl, urllib.parse.quote_plus(title), spacekey)
 
     s = requests.Session()
     s.auth = (username, password)
@@ -290,7 +290,7 @@ def createPage(title, body, ancestors):
             updatePage(pageId, title, body, version, ancestors, attachments)
         else:
             if goToPage:
-                webbrowser.open(link)
+                print(link)
     else:
         print('\nCould not create page.')
         sys.exit(1)
@@ -353,7 +353,7 @@ def updatePage(pageId, title, body, version, ancestors, attachments):
         print("\nPage updated successfully.")
         print('URL: %s' % link)
         if goToPage:
-            webbrowser.open(link)
+            print(link)
     else:
         print("\nPage could not be updated.")
 
